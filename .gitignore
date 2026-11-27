@@ -1,0 +1,19 @@
+# Rust / Tauri 编译产物
+src-tauri/target/
+**/*.rs.bk
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# 日志
+*.log
+
+# Tauri 自动生成的 schema（首次构建生成，可忽略）
+src-tauri/gen/schemas/

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>翻页时钟</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- 闪烁遮罩层 -->
+  <div id="flash-overlay"></div>
+
+  <!-- 主容器 -->
+  <div id="app">
+
+    <!-- 顶部拖拽栏 + 窗口控制 -->
+    <div id="title-bar" data-tauri-drag-region>
+      <div class="window-controls">
+        <button id="btn-minimize" title="最小化">&#x2014;</button>
+        <button id="btn-fullscreen" title="全屏切换">&#x25A1;</button>
+        <button id="btn-close" title="关闭">&#x2715;</button>
+      </div>
+    </div>
+
+    <!-- 时钟显示区域 -->
+    <div id="clock-display">
+
+      <!-- 模式1: 当前时间 -->
+      <div id="mode-clock" class="mode-panel active">
+        <div class="flip-clock" id="clock-time">
+          <!-- 翻页时钟数字由 JS 生成 -->
+        </div>
+      </div>
+
+      <!-- 模式2: 定时器 -->
+      <div id="mode-timer" class="mode-panel">
+        <div class="flip-clock" id="timer-display"></div>
+        <div class="input-panel" id="timer-input">
+          <div class="input-row">
+            <label>设置目标时刻</label>
+            <input type="time" id="timer-target" step="1">
+            <button class="btn-start" id="timer-start">开始</button>
+            <button class="btn-stop" id="timer-stop">停止</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式3: 倒计时 -->
+      <div id="mode-countdown" class="mode-panel">
+        <div class="flip-clock" id="countdown-display"></div>
+        <div class="input-panel" id="countdown-input">
+          <div class="input-row">
+            <label>时</label>
+            <input type="number" id="cd-hours" min="0" max="99" value="0" class="num-input">
+            <label>分</label>
+            <input type="number" id="cd-minutes" min="0" max="59" value="5" class="num-input">
+            <label>秒</label>
+            <input type="number" id="cd-seconds" min="0" max="59" value="0" class="num-input">
+            <button class="btn-start" id="cd-start">开始</button>
+            <button class="btn-stop" id="cd-stop">停止</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 模式4: 番茄钟 -->
+      <div id="mode-pomodoro" class="mode-panel">
+        <div class="flip-clock" id="pomodoro-display"></div>
+        <div class="pomodoro-info">
+          <span id="pomo-phase">准备开始</span>
+          <span id="pomo-count">已完成: 0 个番茄</span>
+        </div>
+        <div class="input-panel">
+          <div class="input-row">
+            <button class="btn-start" id="pomo-start">开始</button>
+            <button class="btn-stop" id="pomo-stop">停止</button>
+            <button class="btn-reset" id="pomo-reset">重置</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 右侧侧边栏 -->
+    <div id="sidebar">
+      <div class="sidebar-icon active" data-mode="clock" title="当前时间">
+        <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="12,6 12,12 16,14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="sidebar-icon" data-mode="timer" title="定时器">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 2 L13 9 L20 10 L13 11 L12 18 L11 11 L4 10 L11 9 Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="20" r="2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+      </div>
+      <div class="sidebar-icon" data-mode="countdown" title="倒计时">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 4 a8 8 0 1 0 0.01 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="12,12 12,7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="2" x2="12" y2="4" stroke="currentColor" stroke-width="2"/></svg>
+      </div>
+      <div class="sidebar-icon" data-mode="pomodoro" title="番茄钟">
+        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 6 C8 6 5 9 5 13 C5 17 8 20 12 20 C16 20 19 17 19 13 C19 9 16 6 12 6 Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 6 L12 4 C12 3 13 2 14 2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 9 C7 10 6 12 6 14" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.5"/></svg>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-icon" id="toggle-seconds" title="切换秒显示">
+        <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 6 L12 3 M12 21 L12 18 M6 12 L3 12 M21 12 L18 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="sidebar-icon" id="toggle-opacity" title="背景透明度">
+        <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.4"/><path d="M12 3 A9 9 0 0 1 21 12" fill="currentColor" opacity="0.25"/></svg>
+      </div>
+    </div>
+
+    <!-- 透明度调节面板 -->
+    <div id="opacity-panel">
+      <span class="label">背景透明度</span>
+      <input type="range" id="opacity-slider" min="10" max="100" value="95">
+      <span id="opacity-value">95%</span>
+    </div>
+
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
