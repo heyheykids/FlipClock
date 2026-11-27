@@ -1,5 +1,7 @@
 # 翻页时钟
 
+[English](README_EN.md) | 中文
+
 经典翻页时钟桌面应用，基于 Tauri v2 + HTML/CSS/JS 实现。
 
 ## 功能
